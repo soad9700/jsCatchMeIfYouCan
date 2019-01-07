@@ -10,7 +10,20 @@
 </head>
 
 <body>
-
+    <div id="mapContainer">
+        <div id="lockScreen">
+          <div id="locInfo" class="lSTxt">Potrzebuję twojej lokalizacji :(</div>
+          <div action="" id="nicknameForm" style="display: none">
+            <div class="lSTxt">Podaj nick</div>
+            <input id="nickField" type="text"></input>
+            <div id="errorBlock"></div>
+            <button id="nickSubmit" class="fBtn">Zapisz</button>
+          </div>
+        </div>
+        <div id="map">
+        </div>
+        <script src="script.js"></script>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyABCW1y3lqqX-Y8LutiILfWcLpbKGOgSLk&callback=initMap"></script>
     <script type="text/javascript" src="./script.js"></script>
 </body>
 
