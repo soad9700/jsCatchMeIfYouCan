@@ -1,5 +1,6 @@
 let appName = 'catch' //nazwa aplikacji dla websocket
 let nick = "";
+
 let mapElement = document.getElementById('map');
 let players = {}; //lista graczy
 
@@ -25,12 +26,15 @@ function initMap() {
     setOverlay();
 }
 
+
+
 let coords;
 
 // pobieranie lokalizacji od usera
 function getLocalization() {
     navigator.geolocation.getCurrentPosition(geoOk, geoFail);
 }
+
 
 function geoOk(data) {
     showNickForm();
@@ -101,6 +105,83 @@ function positionMsgIn(data) {
 
 function addEvents() {
     document.getElementById('map').addEventListener('mousemove', setMoveMarker)
+}
+
+let mousePos;
+let markerIsMoving = false;
+//śledzenie pozycji kursora i przesuwanie markera
+function setMoveMarker(e) {
+    mousePos = {
+        x: e.layerX,
+        y: e.layerY
+    }
+    if (!markerIsMoving) {
+        markerIsMoving = true;
+        moveMarker();
+    }
+}
+
+let wsData;
+const sendFrequency = 200; //częstotliwosc wysyłania danych
+function sendPosition() {
+    setTimeout(sendPosition, sendFrequency);
+    if (wsData)
+        ws.send(JSON.stringify(wsData));
+}
+
+const speed = 10; //prędkość markera
+function moveMarker() {
+    let lat = marker.getPosition().lat()
+    let lng = marker.getPosition().lng()
+
+    let mvValue = (1 / Math.pow(2, map.zoom)) * speed;
+
+    //marker posiotion from map position to px position
+    let markerPos = overlay.getProjection().fromLatLngToContainerPixel(marker.getPosition())
+
+    //dystans miedzy markerem i kursorem
+    let distance = {
+        x: Math.abs(markerPos.x - mousePos.x),
+        y: Math.abs(markerPos.y - mousePos.y)
+    }
+
+    //multiplier dependent on x and y difference
+    let multiplier = {
+        x: distance.x / (distance.x + distance.y),
+        y: distance.y / (distance.x + distance.y)
+    }
+
+    //przesuwanie markera w strone kursora
+    if (markerPos.x < mousePos.x) lng += mvValue * multiplier.x
+    else if (markerPos.x > mousePos.x) lng -= mvValue * multiplier.x
+
+    if (markerPos.y < mousePos.y) lat -= mvValue * multiplier.y
+    else if (markerPos.y > mousePos.y) lat += mvValue * multiplier.y
+
+    //update pozycji markera
+    marker.setPosition({
+        lat: lat,
+        lng: lng
+    })
+
+    //dane do wysłania do serwera
+    wsData = {
+        app: appName,
+
+        lat: lat,
+        lng: lng,
+        id: nick
+    }
+
+    //sprawdzanie dystansu
+    let maxVal = 0.5;
+    if (distance.x > maxVal && distance.y > maxVal)
+        requestAnimationFrame(() => {
+            moveMarker()
+        })
+    else
+        markerIsMoving = false
+
 }
 
 //obsługa pola do ustawiania nicku
